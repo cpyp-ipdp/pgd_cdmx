@@ -1,0 +1,175 @@
+##
+rm(list=ls())
+# Librerías necesarias
+install.packages("tidyverse")
+install.packages("srvyr")
+install.packages("readr")
+install.packages("stringr")
+install.packages("dplyr")
+# Cargar librerías necesarias
+library(tidyverse)
+library(survey)
+library(readr)
+library(stringr)
+library(dplyr)
+######################################################
+###Código para Estimación correspondiente al año 2022
+#Estimación de Promedio de gasto trimestral en cuidados 
+gasto_2022 <- read_csv("D:/Documentos/Indicadores_cuidados/conjunto_de_datos_gastoshogar_enigh2022_ns.csv")
+# Filtrar los datos con las claves específicas
+claves_cuidado <- c("E010", "E012", "E008", "C020")
+gasto_cuidado <- gasto_2022 %>% 
+  filter(clave %in% claves_cuidado)
+# Calcular el promedio de gasto en cuidados agrupado por entidad
+promedio_gasto <- gasto_cuidado %>% 
+  group_by(entidad) %>% 
+  summarise(promedio_gasto_tri = mean(gasto_tri, na.rm = TRUE))
+# Mostrar los resultados
+print(promedio_gasto)
+# Filtrar la entidad 9 (CDMX)
+promedio_gasto_cdmx <- promedio_gasto %>% 
+  filter(entidad == 09)
+# Mostrar los resultados de la CDMX
+print(promedio_gasto_cdmx)
+
+#####################################################
+###Código para Estimación correspondiente al año 2020
+#Estimación dePromedio de gasto trimestral en cuidados
+# Cargar las bases de datos
+vivienda_2020 <- read_csv("D:/Documentos/Indicadores_cuidados/conjunto_de_datos_viviendas_enigh_2020_ns.csv")  
+hogares_2020 <- read_csv("D:/Documentos/Indicadores_cuidados/conjunto_de_datos_hogares_enigh_2020_ns.csv")  
+gasto_2020 <- read_csv("D:/Documentos/Indicadores_cuidados/conjunto_de_datos_gastoshogar_enigh_2020_ns.csv")
+#Esto lo hacemos para asegurarnos de que todos los folios tengan la misma longitud 
+# Asegurar que la columna folioviv sea de tipo carácter
+vivienda_2020$folioviv <- as.character(vivienda_2020$folioviv)
+hogares_2020$folioviv <- as.character(hogares_2020$folioviv)
+gasto_2020$folioviv <- as.character(gasto_2020$folioviv)
+# Rellenar con ceros a la izquierda para que tenga 10 dígitos
+vivienda_2020$folioviv <- str_pad(vivienda_2020$folioviv, width = 10, side = "left", pad = "0")
+hogares_2020$folioviv <- str_pad(hogares_2020$folioviv, width = 10, side = "left", pad = "0")
+gasto_2020$folioviv <- str_pad(gasto_2020$folioviv, width = 10, side = "left", pad = "0")
+# Realizar la unión (left join) entre 'hogares' y 'vivienda'
+hog_2020 <- merge(hogares_2020, vivienda_2020[, c("factor", "upm", "est_dis", "folioviv")],
+                      by = "folioviv", all.x = TRUE)
+# Guardar la nueva base de datos con las columnas unidas en un archivo CSV
+write_csv(hog_2020, "D:/Documentos/Indicadores_cuidados/hog_2020.csv")  
+# Realizar la unión (left join) entre 'gastoshogar_2020' y 'hog_dis_mues'
+# Usaremos las columnas 'folioviv' y 'foliohog' de ambas bases, y además tomaremos en cuenta 'numren' en la base gastoshogar_2020
+hog_completa_2020 <- merge(gasto_2020, hog_2020[, c("factor", "upm", "est_dis", "folioviv", "foliohog")],
+                               by = c("folioviv", "foliohog"), all.x = TRUE)
+# Guardar la nueva base de datos con las columnas unidas en un archivo CSV
+write_csv(hog_completa_2020, "D:/Documentos/Indicadores_cuidados/hog_completa_2020.csv")
+#Vamos a crear una columna llamada entidad a partir de la variable folioviv 
+hog_completa_2020$entidad <- substr(hog_completa_2020$folioviv, 1, 2)
+# Guardar la nueva base de datos con la columna 'entidad' en un archivo CSV
+write_csv(hog_completa_2020, "D:/Documentos/Indicadores_cuidados/hog_completa_2020.csv")
+##Ahora vamos a calcular el promedio 
+claves_cuidado <- c("E010", "E012", "E008", "C020")
+gasto_cuidado_2020 <- hog_completa_2020 %>% 
+  filter(clave %in% claves_cuidado)
+# Calcular el promedio de gasto en cuidados agrupado por entidad
+promedio_gasto_2020 <- gasto_cuidado_2020 %>% 
+  group_by(entidad) %>% 
+  summarise(promedio_gasto_tri = mean(gasto_tri, na.rm = TRUE))
+# Mostrar los resultados
+print(promedio_gasto_2020)
+# Filtrar la entidad 9 (CDMX)
+promedio_gasto_cdmx_2020 <- promedio_gasto_2020 %>% 
+  filter(entidad == 09)
+# Mostrar los resultados de la CDMX
+print(promedio_gasto_cdmx_2020)
+
+####################################################################################
+####Código para Estimación correspondiente al año 2018
+#Estimación dePromedio de gasto trimestral en cuidados
+# Cargar las bases de datos
+vivienda_2018 <- read_csv("D:/Documentos/Indicadores_cuidados/conjunto_de_datos_viviendas_enigh_2018_ns.csv")  
+hogares_2018 <- read_csv("D:/Documentos/Indicadores_cuidados/conjunto_de_datos_hogares_enigh_2018_ns.csv")  
+gasto_2018 <- read_csv("D:/Documentos/Indicadores_cuidados/conjunto_de_datos_gastoshogar_enigh_2018_ns.csv")
+#Esto lo hacemos para asegurarnos de que todos los folios tengan la misma longitud 
+# Asegurar que la columna folioviv sea de tipo carácter
+vivienda_2018$folioviv <- as.character(vivienda_2018$folioviv)
+hogares_2018$folioviv <- as.character(hogares_2018$folioviv)
+gasto_2018$folioviv <- as.character(gasto_2018$folioviv)
+# Rellenar con ceros a la izquierda para que tenga 10 dígitos
+vivienda_2018$folioviv <- str_pad(vivienda_2018$folioviv, width = 10, side = "left", pad = "0")
+hogares_2018$folioviv <- str_pad(hogares_2018$folioviv, width = 10, side = "left", pad = "0")
+gasto_2018$folioviv <- str_pad(gasto_2018$folioviv, width = 10, side = "left", pad = "0")
+# Realizar la unión (left join) entre 'hogares' y 'vivienda'
+hog_2018 <- merge(hogares_2018, vivienda_2018[, c("factor", "upm", "est_dis", "folioviv")],
+                  by = "folioviv", all.x = TRUE)
+# Guardar la nueva base de datos con las columnas unidas en un archivo CSV
+write_csv(hog_2018, "D:/Documentos/Indicadores_cuidados/hog_2018.csv")  
+# Realizar la unión (left join) entre 'gastohogar_2018' y 'hog_dis_mues'
+# Usaremos las columnas 'folioviv' y 'foliohog' de ambas bases, y además tomaremos en cuenta 'numren' en la base gastohogar_2018
+hog_completa_2018 <- merge(gasto_2018, hog_2018[, c("factor", "upm", "est_dis", "folioviv", "foliohog")],
+                           by = c("folioviv", "foliohog"), all.x = TRUE)
+# Guardar la nueva base de datos con las columnas unidas en un archivo CSV
+write_csv(hog_completa_2018, "D:/Documentos/Indicadores_cuidados/hog_completa_2018.csv")
+#Vamos a crear una columna llamada entidad a partir de la variable folioviv 
+hog_completa_2018$entidad <- substr(hog_completa_2018$folioviv, 1, 2)
+# Guardar la nueva base de datos con la columna 'entidad' en un archivo CSV
+write_csv(hog_completa_2018, "D:/Documentos/Indicadores_cuidados/hog_completa_2018.csv")
+##Ahora vamos a calcular el promedio 
+claves_cuidado <- c("E010", "E012", "E008", "C020")
+gasto_cuidado_2018 <- hog_completa_2018 %>% 
+  filter(clave %in% claves_cuidado)
+# Calcular el promedio de gasto en cuidados agrupado por entidad
+promedio_gasto_2018 <- gasto_cuidado_2018 %>% 
+  group_by(entidad) %>% 
+  summarise(promedio_gasto_tri = mean(gasto_tri, na.rm = TRUE))
+# Mostrar los resultados
+print(promedio_gasto_2018)
+# Filtrar la entidad 9 (CDMX)
+promedio_gasto_cdmx_2018 <- promedio_gasto_2018 %>% 
+  filter(entidad == 09)
+# Mostrar los resultados de la CDMX
+print(promedio_gasto_cdmx_2018)
+
+####################################################################################
+####Código para Estimación correspondiente al año 2016
+#Estimación de Promedio de gasto trimestral en cuidados
+# Cargar las bases de datos
+vivienda_2016 <- read_csv("D:/Documentos/Indicadores_cuidados/conjunto_de_datos_viviendas_enigh_2016_ns.csv")  
+hogares_2016 <- read_csv("D:/Documentos/Indicadores_cuidados/conjunto_de_datos_hogares_enigh_2016_ns.csv")  
+gasto_2016 <- read_csv("D:/Documentos/Indicadores_cuidados/conjunto_de_datos_gastoshogar_enigh_2016_ns.csv")
+#Esto lo hacemos para asegurarnos de que todos los folios tengan la misma longitud 
+# Asegurar que la columna folioviv sea de tipo carácter
+vivienda_2016$folioviv <- as.character(vivienda_2016$folioviv)
+hogares_2016$folioviv <- as.character(hogares_2016$folioviv)
+gasto_2016$folioviv <- as.character(gasto_2016$folioviv)
+# Rellenar con ceros a la izquierda para que tenga 10 dígitos
+vivienda_2016$folioviv <- str_pad(vivienda_2016$folioviv, width = 10, side = "left", pad = "0")
+hogares_2016$folioviv <- str_pad(hogares_2016$folioviv, width = 10, side = "left", pad = "0")
+gasto_2016$folioviv <- str_pad(gasto_2016$folioviv, width = 10, side = "left", pad = "0")
+# Realizar la unión (left join) entre 'hogares' y 'vivienda'
+hog_2016 <- merge(hogares_2016, vivienda_2016[, c("factor", "upm", "est_dis", "folioviv")],
+                  by = "folioviv", all.x = TRUE)
+# Guardar la nueva base de datos con las columnas unidas en un archivo CSV
+write_csv(hog_2016, "D:/Documentos/Indicadores_cuidados/hog_2016.csv")  
+# Realizar la unión (left join) entre 'gastohogar_2016' y 'hog_dis_mues'
+# Usaremos las columnas 'folioviv' y 'foliohog' de ambas bases, y además tomaremos en cuenta 'numren' en la base gastohogar_2016
+hog_completa_2016 <- merge(gasto_2016, hog_2016[, c("factor", "upm", "est_dis", "folioviv", "foliohog")],
+                           by = c("folioviv", "foliohog"), all.x = TRUE)
+# Guardar la nueva base de datos con las columnas unidas en un archivo CSV
+write_csv(hog_completa_2016, "D:/Documentos/Indicadores_cuidados/hog_completa_2016.csv")
+#Vamos a crear una columna llamada entidad a partir de la variable folioviv 
+hog_completa_2016$entidad <- substr(hog_completa_2016$folioviv, 1, 2)
+# Guardar la nueva base de datos con la columna 'entidad' en un archivo CSV
+write_csv(hog_completa_2016, "D:/Documentos/Indicadores_cuidados/hog_completa_2016.csv")
+##Ahora vamos a calcular el promedio 
+claves_cuidado <- c("E010", "E012", "E008", "C020")
+gasto_cuidado_2016 <- hog_completa_2016 %>% 
+  filter(clave %in% claves_cuidado)
+# Calcular el promedio de gasto en cuidados agrupado por entidad
+promedio_gasto_2016 <- gasto_cuidado_2016 %>% 
+  group_by(entidad) %>% 
+  summarise(promedio_gasto_tri = mean(gasto_tri, na.rm = TRUE))
+# Mostrar los resultados
+print(promedio_gasto_2016)
+# Filtrar la entidad 9 (CDMX)
+promedio_gasto_cdmx_2016 <- promedio_gasto_2016 %>% 
+  filter(entidad == 09)
+# Mostrar los resultados de la CDMX
+print(promedio_gasto_cdmx_2016)
+
