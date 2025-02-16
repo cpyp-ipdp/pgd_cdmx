@@ -1,0 +1,247 @@
+##
+rm(list=ls())
+# Librerías necesarias
+install.packages("tidyverse")
+install.packages("srvyr")
+install.packages("readr")
+install.packages("stringr")
+# Cargar librerías necesarias
+library(tidyverse)
+library(survey)
+library(readr)
+library(stringr)
+
+###Código para Estimación correspondiente al año 2022
+#Estimación de promedio de horas para 2022
+# Cargar las bases de datos (para este código se descargaron los Datos abiertos por año y se usó la carpeta "poblacion")
+poblacion_2022 <- read_csv("D:/Documentos/Indicadores_cuidados/conjunto_de_datos_poblacion_enigh2022_ns.csv")
+# Crear la columna "horas_cuidado"
+poblacion_2022 <- poblacion_2022 %>%
+  mutate(horas_cuidado_2022 = ifelse(is.na(min_4) | min_4 == 0, hor_4, hor_4 + (min_4 / 60)))
+# Definir el diseño muestral
+diseno_2022 <- svydesign(
+  id = ~upm, 
+  strata = ~est_dis, 
+  weights = ~factor, 
+  data = poblacion_2022, 
+  nest = TRUE
+)
+# Calcular el promedio de horas de cuidado por entidad
+promedio_horas_2022 <- svyby(~horas_cuidado_2022, ~entidad, diseno_2022, svymean, na.rm = TRUE)
+# Mostrar la tabla de resultados
+print("Promedio de horas de cuidado por entidad_2022")
+print(promedio_horas_2022)
+#filtrar el promedio de la ciudad de méxico
+promedio_cdmx_2022 <- promedio_horas_2022 %>%
+  filter(entidad == "09")
+# Mostrar la tabla de resultados para CDMX
+print("Promedio de horas de cuidado en la CDMX en 2022")
+print(promedio_cdmx_2022)
+  
+###############################################################
+###Código para Estimación correspondiente al año 2020
+#La base de población no cuenta con los datos del diseño muestral, por lo que debemos hacer uniones 
+#de bases pimero para que la base de población tenga el diseño muestral
+# Cargar las bases de datos
+vivienda <- read_csv("D:/Documentos/Indicadores_cuidados/conjunto_de_datos_viviendas_enigh_2020_ns.csv")  
+hogares <- read_csv("D:/Documentos/Indicadores_cuidados/conjunto_de_datos_hogares_enigh_2020_ns.csv")  
+poblacion_2020 <- read_csv("D:/Documentos/Indicadores_cuidados/conjunto_de_datos_poblacion_enigh_2020_ns.csv") 
+# Verificar que se cargaron correctamente
+head(vivienda)
+head(hogares)
+# Realizar la unión (left join) entre 'hogares' y 'vivienda'
+hog_dis_mues <- merge(hogares, vivienda[, c("factor", "upm", "est_dis", "folioviv")],
+                      by = "folioviv", all.x = TRUE)
+# Verificar los primeros registros de la base resultante
+head(hog_dis_mues)
+
+# Guardar la nueva base de datos con las columnas unidas en un archivo CSV
+write_csv(hog_dis_mues, "D:/Documentos/Indicadores_cuidados/hog_dis_mues_ns.csv")  
+
+# Verificar que se cargaron correctamente las bases para la nueva unión 
+head(poblacion_2020)
+head(hog_dis_mues)
+
+# Realizar la unión (left join) entre 'poblacion_2020' y 'hog_dis_mues'
+# Usaremos las columnas 'folioviv' y 'foliohog' de ambas bases, y además tomaremos en cuenta 'numren' en la base poblacion_2020
+hog_dis_mues_completa <- merge(poblacion_2020, hog_dis_mues[, c("factor", "upm", "est_dis", "folioviv", "foliohog")],
+                               by = c("folioviv", "foliohog"), all.x = TRUE)
+# Verificar los primeros registros de la base resultante
+head(hog_dis_mues_completa)
+# Guardar la nueva base de datos con las columnas unidas en un archivo CSV
+write_csv(hog_dis_mues_completa, "D:/Documentos/Indicadores_cuidados/hog_dis_mues_completa_2020.csv")
+
+#Vamos a crear una columna llamada entidad a partir de la variable folioviv 
+hog_dis_mues_completa$entidad <- substr(hog_dis_mues_completa$folioviv, 1, 2)
+head(hog_dis_mues_completa)
+
+# Guardar la nueva base de datos con la columna 'entidad' en un archivo CSV
+write_csv(hog_dis_mues_completa, "D:/Documentos/Indicadores_cuidados/hog_dis_mues_completa_2020.csv")
+
+#Ahora sí vamos a calcular el promedio de horas para 2020 
+hog_dis_mues_completa <- hog_dis_mues_completa %>%
+  mutate(horas_cuidado_2020 = ifelse(is.na(min_4) | min_4 == 0, hor_4, hor_4 + (min_4 / 60)))
+# Definir el diseño muestral
+diseno_2020 <- svydesign(
+  id = ~upm, 
+  strata = ~est_dis, 
+  weights = ~factor, 
+  data = hog_dis_mues_completa, 
+  nest = TRUE
+)
+# Calcular el promedio de horas de cuidado por entidad
+promedio_horas_2020 <- svyby(~horas_cuidado_2020, ~entidad, diseno_2020, svymean, na.rm = TRUE)
+# Mostrar la tabla de resultados
+print("Promedio de horas de cuidado por entidad_2020")
+print(promedio_horas_2020)
+#filtrar el promedio de la ciudad de méxico
+promedio_cdmx_2020 <- promedio_horas_2020 %>%
+  filter(entidad == "09")
+# Mostrar la tabla de resultados para CDMX
+print("Promedio de horas de cuidado en la CDMX en 2020")
+print(promedio_cdmx_2020)
+
+#############################################################
+###Código para Estimación correspondiente al año 2018
+##este código es igual al del año 2020, dado que la base de población tampoco contiene diseño muestral :(
+vivienda_2018 <- read_csv("D:/Documentos/Indicadores_cuidados/conjunto_de_datos_viviendas_enigh_2018_ns.csv")  
+hogares_2018 <- read_csv("D:/Documentos/Indicadores_cuidados/conjunto_de_datos_hogares_enigh_2018_ns.csv")  
+poblacion_2018 <- read_csv("D:/Documentos/Indicadores_cuidados/conjunto_de_datos_poblacion_enigh_2018_ns.csv") 
+
+#Esto lo hacemos para asegurarnos de que todos los folios tengan la misma longitud 
+# Asegurar que la columna folioviv sea de tipo carácter
+vivienda_2018$folioviv <- as.character(vivienda_2018$folioviv)
+hogares_2018$folioviv <- as.character(hogares_2018$folioviv)
+poblacion_2018$folioviv <- as.character(poblacion_2018$folioviv)
+# Rellenar con ceros a la izquierda para que tenga 10 dígitos
+vivienda_2018$folioviv <- str_pad(vivienda_2018$folioviv, width = 10, side = "left", pad = "0")
+hogares_2018$folioviv <- str_pad(hogares_2018$folioviv, width = 10, side = "left", pad = "0")
+poblacion_2018$folioviv <- str_pad(poblacion_2018$folioviv, width = 10, side = "left", pad = "0")
+
+# Realizar la unión (left join) entre 'hogares' y 'vivienda'
+hog_dis_mues_2018 <- merge(hogares_2018, vivienda_2018[, c("factor", "upm", "est_dis", "folioviv")],
+                      by = "folioviv", all.x = TRUE)
+# Verificar los primeros registros de la base resultante
+head(hog_dis_mues_2018)
+# Guardar la nueva base de datos con las columnas unidas en un archivo CSV
+write_csv(hog_dis_mues_2018, "D:/Documentos/Indicadores_cuidados/hog_dis_mues_2018_ns.csv")  
+# Verificar que se cargaron correctamente las bases para la nueva unión 
+head(poblacion_2018)
+head(hog_dis_mues)
+# Realizar la unión (left join) entre 'poblacion_2020' y 'hog_dis_mues'
+# Usaremos las columnas 'folioviv' y 'foliohog' de ambas bases, y además tomaremos en cuenta 'numren' en la base poblacion_2020
+hog_dis_mues_completa_2018 <- merge(poblacion_2018, hog_dis_mues_2018[, c("factor", "upm", "est_dis", "folioviv", "foliohog")],
+                               by = c("folioviv", "foliohog"), all.x = TRUE)
+# Verificar los primeros registros de la base resultante
+head(hog_dis_mues_completa_2018)
+# Guardar la nueva base de datos con las columnas unidas en un archivo CSV
+write_csv(hog_dis_mues_completa_2018, "D:/Documentos/Indicadores_cuidados/hog_dis_mues_completa_2018.csv")
+
+#Vamos a crear una columna llamada entidad a partir de la variable folioviv 
+hog_dis_mues_completa_2018$entidad <- substr(hog_dis_mues_completa_2018$folioviv, 1, 2)
+head(hog_dis_mues_completa_2018)
+
+# Guardar la nueva base de datos con la columna 'entidad' en un archivo CSV
+write_csv(hog_dis_mues_completa_2018, "D:/Documentos/Indicadores_cuidados/hog_dis_mues_completa_2018.csv")
+
+#Ahora sí vamos a calcular el promedio de horas para 2020 
+hog_dis_mues_completa_2018 <- hog_dis_mues_completa_2018 %>%
+  mutate(horas_cuidado_2018 = ifelse(is.na(min_4) | min_4 == 0, hor_4, hor_4 + (min_4 / 60)))
+
+# Verificar si hay valores NA en la columna 'est_dis'
+sum(is.na(hog_dis_mues_completa_2018$est_dis))
+
+hog_dis_mues_completa_2018 <- hog_dis_mues_completa_2018[!is.na(hog_dis_mues_completa_2018$est_dis), ]
+
+# Definir el diseño muestral
+diseno_2018 <- svydesign(
+  id = ~upm, 
+  strata = ~est_dis, 
+  weights = ~factor, 
+  data = hog_dis_mues_completa_2018, 
+  nest = TRUE
+)
+# Calcular el promedio de horas de cuidado por entidad
+promedio_horas_2018 <- svyby(~horas_cuidado_2018, ~entidad, diseno_2018, svymean, na.rm = TRUE)
+# Mostrar la tabla de resultados
+print("Promedio de horas de cuidado por entidad_2018")
+print(promedio_horas_2018)
+#filtrar el promedio de la ciudad de méxico
+promedio_cdmx_2018 <- promedio_horas_2018 %>%
+  filter(entidad == "09")
+# Mostrar la tabla de resultados para CDMX
+print("Promedio de horas de cuidado en la CDMX en 2018")
+print(promedio_cdmx_2018)
+
+#############################################################
+###Estimación del promedio correspondiente al año 2016
+vivienda_2016 <- read_csv("D:/Documentos/Indicadores_cuidados/conjunto_de_datos_viviendas_enigh_2016_ns.csv")  
+hogares_2016 <- read_csv("D:/Documentos/Indicadores_cuidados/conjunto_de_datos_hogares_enigh_2016_ns.csv")  
+poblacion_2016 <- read_csv("D:/Documentos/Indicadores_cuidados/conjunto_de_datos_poblacion_enigh_2016_ns.csv") 
+
+#Esto lo hacemos para asegurarnos de que todos los folios tengan la misma longitud 
+# Asegurar que la columna folioviv sea de tipo carácter
+vivienda_2016$folioviv <- as.character(vivienda_2016$folioviv)
+hogares_2016$folioviv <- as.character(hogares_2016$folioviv)
+poblacion_2016$folioviv <- as.character(poblacion_2016$folioviv)
+# Rellenar con ceros a la izquierda para que tenga 10 dígitos
+vivienda_2016$folioviv <- str_pad(vivienda_2016$folioviv, width = 10, side = "left", pad = "0")
+hogares_2016$folioviv <- str_pad(hogares_2016$folioviv, width = 10, side = "left", pad = "0")
+poblacion_2016$folioviv <- str_pad(poblacion_2016$folioviv, width = 10, side = "left", pad = "0")
+
+# Realizar la unión (left join) entre 'hogares' y 'vivienda'
+hog_dis_mues_2016 <- merge(hogares_2016, vivienda_2016[, c("factor", "upm", "est_dis", "folioviv")],
+                           by = "folioviv", all.x = TRUE)
+# Verificar los primeros registros de la base resultante
+head(hog_dis_mues_2016)
+# Guardar la nueva base de datos con las columnas unidas en un archivo CSV
+write_csv(hog_dis_mues_2016, "D:/Documentos/Indicadores_cuidados/hog_dis_mues_2016_ns.csv")  
+# Verificar que se cargaron correctamente las bases para la nueva unión 
+head(poblacion_2016)
+head(hog_dis_mues)
+# Realizar la unión (left join) entre 'poblacion_2016' y 'hog_dis_mues'
+# Usaremos las columnas 'folioviv' y 'foliohog' de ambas bases, y además tomaremos en cuenta 'numren' en la base poblacion_2020
+hog_dis_mues_completa_2016 <- merge(poblacion_2016, hog_dis_mues_2016[, c("factor", "upm", "est_dis", "folioviv", "foliohog")],
+                                    by = c("folioviv", "foliohog"), all.x = TRUE)
+# Verificar los primeros registros de la base resultante
+head(hog_dis_mues_completa_2016)
+# Guardar la nueva base de datos con las columnas unidas en un archivo CSV
+write_csv(hog_dis_mues_completa_2016, "D:/Documentos/Indicadores_cuidados/hog_dis_mues_completa_2016.csv")
+
+#Vamos a crear una columna llamada entidad a partir de la variable folioviv 
+hog_dis_mues_completa_2016$entidad <- substr(hog_dis_mues_completa_2016$folioviv, 1, 2)
+head(hog_dis_mues_completa_2016)
+
+# Guardar la nueva base de datos con la columna 'entidad' en un archivo CSV
+write_csv(hog_dis_mues_completa_2016, "D:/Documentos/Indicadores_cuidados/hog_dis_mues_completa_2016.csv")
+
+#Ahora sí vamos a calcular el promedio de horas para 2020 
+hog_dis_mues_completa_2016 <- hog_dis_mues_completa_2016 %>%
+  mutate(horas_cuidado_2016 = ifelse(is.na(min_4) | min_4 == 0, hor_4, hor_4 + (min_4 / 60)))
+
+# Verificar si hay valores NA en la columna 'est_dis'
+sum(is.na(hog_dis_mues_completa_2016$est_dis))
+
+hog_dis_mues_completa_2016 <- hog_dis_mues_completa_2016[!is.na(hog_dis_mues_completa_2016$est_dis), ]
+
+# Definir el diseño muestral
+diseno_2016 <- svydesign(
+  id = ~upm, 
+  strata = ~est_dis, 
+  weights = ~factor, 
+  data = hog_dis_mues_completa_2016, 
+  nest = TRUE
+)
+# Calcular el promedio de horas de cuidado por entidad
+promedio_horas_2016 <- svyby(~horas_cuidado_2016, ~entidad, diseno_2016, svymean, na.rm = TRUE)
+# Mostrar la tabla de resultados
+print("Promedio de horas de cuidado por entidad_2016")
+print(promedio_horas_2016)
+
+#filtrar el promedio de la ciudad de méxico
+promedio_cdmx_2016 <- promedio_horas_2016 %>%
+  filter(entidad == "09")
+# Mostrar la tabla de resultados para CDMX
+print("Promedio de horas de cuidado en la CDMX en 2016")
+print(promedio_cdmx_2016)
+
