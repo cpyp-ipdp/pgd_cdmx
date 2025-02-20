@@ -11,8 +11,6 @@ library(srvyr)
 library(stats)
 
 
-#DIRECTORIO----
-setwd("C:/Users/brenp/Desktop/INDICADORES PLAN GENERAL CDMX/RIESGOS")
 ##DATOS DEL CENSO DE POBLACIÓN Y VIVIENDA (PRINCIPALES RESULTADOS POR MANZANA)----
 url <- "https://www.inegi.org.mx/contenidos/programas/ccpv/2020/microdatos/ageb_manzana/RESAGEBURB_09_2020_xlsx.zip"
 options(timeout = 500)
